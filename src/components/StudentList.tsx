@@ -5,7 +5,7 @@ import StudentForm from "./StudentForm";
 import type { StudentShape } from "./StudentForm";
 import { encryptData, decryptData } from "../utils/crypto";
 
-type StudentWithId = StudentShape & { id: number; password: string };
+type StudentWithId = StudentShape & { id: number };
 
 const StudentList: React.FC = () => {
   const [students, setStudents] = useState<StudentWithId[]>([]);
@@ -16,7 +16,18 @@ const StudentList: React.FC = () => {
 
   const fetchStudents = async () => {
     const { data } = await axios.get("http://localhost:5000/students");
-    setStudents(data);
+    const decryptedStudents: StudentWithId[] = data
+      .map((record: any) => {
+        try {
+          const obj = JSON.parse(decryptData(record.encrypted));
+          return { ...obj, id: record.id };
+        } catch (err) {
+          console.error("Failed to decrypt student:", err);
+          return null;
+        }
+      })
+      .filter(Boolean) as StudentWithId[];
+    setStudents(decryptedStudents);
   };
 
   useEffect(() => {
@@ -29,15 +40,14 @@ const StudentList: React.FC = () => {
   };
 
   const handleCreate = async (payload: StudentShape) => {
-    const toSave = { ...payload, password: encryptData(payload.password) };
-    await axios.post("http://localhost:5000/students", toSave);
+    const encrypted = encryptData(JSON.stringify(payload));
+    await axios.post("http://localhost:5000/students", { encrypted });
     fetchStudents();
     setCreating(false);
   };
 
   const startEdit = (s: StudentWithId) => {
-    const decrypted = decryptData(s.password);
-    setEditing({ ...s, password: decrypted });
+    setEditing(s);
     document.documentElement.classList.add("modal-open");
   };
 
@@ -48,14 +58,15 @@ const StudentList: React.FC = () => {
 
   const handleSaveEdit = async (payload: StudentShape & { id?: number }) => {
     if (!payload.id) return;
-    const toSave = { ...payload, password: encryptData(payload.password) };
-    await axios.put(`http://localhost:5000/students/${payload.id}`, toSave);
+    const encrypted = encryptData(JSON.stringify(payload));
+    await axios.put(`http://localhost:5000/students/${payload.id}`, {
+      encrypted,
+    });
     closeEdit();
     fetchStudents();
 
     if (logged && logged.id === payload.id) {
-      const updated = { ...toSave, id: payload.id };
-      localStorage.setItem("student", JSON.stringify(updated));
+      localStorage.setItem("student", JSON.stringify(payload));
     }
   };
 
@@ -129,11 +140,9 @@ const StudentList: React.FC = () => {
                   <td className="border px-3 py-2">{s.phone}</td>
                   <td className="border px-3 py-2">{s.dob}</td>
                   <td className="border px-3 py-2">{s.gender}</td>
-                  <td className="border px-3 py-2  text-left">
-                    {s.address}
-                  </td>
+                  <td className="border px-3 py-2 text-left">{s.address}</td>
                   <td className="border px-3 py-2">{s.course}</td>
-                  <td className=" px-3 py-2 flex gap-5 space-x-2">
+                  <td className="px-3 py-2 flex gap-5 space-x-2">
                     <button
                       onClick={() => startEdit(s)}
                       className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"

@@ -1,38 +1,69 @@
-# Student Management System (React + JSON Server + Tailwind CSS)
+# React + TypeScript + Vite
 
-Simple CRUD app. All passwords are stored encrypted (AES). After registering a user can login — only logged-in users can see the list and perform CRUD on any record (create/edit/delete). After logout only register/login are visible.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
-- Register with fields: Full Name, Email, Phone Number, Date of Birth, Gender, Address, Course Enrolled, Password
-- Login using Email + Password (password decrypted on client to verify)
-- List of all users visible only after login
-- Create new user (same fields) after login
-- Edit any user's details (form shows decrypted password; re-encrypted on save)
-- Delete any user
-- No roles — any logged-in user can CRUD any user
-- Data stored in `db.json` — password stored encrypted
+Currently, two official plugins are available:
 
-## Setup
-1. npm create vite@latest task-react-typescript and selected typescript 
-2. `npm install`
-3. Start JSON Server: `npm start`
-4. Start React app: `npm run dev`
-- React app: http://localhost:5173
-- JSON server: http://localhost:5000/students
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Encryption
-Using `crypto-js` AES:
-- `encryptData(password)` before saving record
-- `decryptData(storedPassword)` for login & pre-filling edit form
+## Expanding the ESLint configuration
 
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-## Tech stack
-- React + TypeScript
-- Tailwind CSS
-- React Router 
-- Axios
-- JSON Server (mock API)
-- CryptoJS (AES)
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

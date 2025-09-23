@@ -9,8 +9,7 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const handleRegister = async (data: StudentShape) => {
-    // Encrypt password then POST
-    const payload = { ...data, password: encryptData(data.password) };
+   const payload = { encrypted: encryptData(JSON.stringify(data)) };
     await axios.post("http://localhost:5000/students", payload);
     alert("Registration successful. Please login.");
     navigate("/login");

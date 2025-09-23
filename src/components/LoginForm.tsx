@@ -12,22 +12,29 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data } = await axios.get(
-        `http://localhost:5000/students?email=${encodeURIComponent(email)}`
-      );
-      if (data.length === 0) {
-        setError("Invalid email or password");
-        return;
+      const { data } = await axios.get("http://localhost:5000/students");
+
+      let foundUser: any = null;
+      for (const record of data) {
+        try {
+          const decrypted = JSON.parse(decryptData(record.encrypted));
+          if (decrypted.email === email && decrypted.password === password) {
+            foundUser = decrypted;
+            break;
+          }
+        } catch (err) {
+          console.error("Failed to decrypt:", err);
+        }
       }
-      const user = data[0];
-      const decrypted = decryptData(user.password);
-      if (decrypted === password) {
-        localStorage.setItem("student", JSON.stringify(user));
+
+      if (foundUser) {
+        localStorage.setItem("student", JSON.stringify(foundUser));
         navigate("/students");
       } else {
         setError("Invalid email or password");
       }
     } catch (err) {
+      console.error(err);
       setError("Something went wrong, try again");
     }
   };
