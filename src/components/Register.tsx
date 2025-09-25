@@ -9,8 +9,13 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const handleRegister = async (data: StudentShape) => {
-   const payload = { encrypted: encryptData(JSON.stringify(data)) };
-    await axios.post("http://localhost:5000/students", payload);
+    
+    const encryptedData: Record<string, string> = {};
+    Object.entries(data).forEach(([key, value]) => {
+      encryptedData[key] = encryptData(String(value));
+    });
+
+    await axios.post("http://localhost:5000/students", encryptedData);
     alert("Registration successful. Please login.");
     navigate("/login");
   };

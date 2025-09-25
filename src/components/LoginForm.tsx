@@ -17,13 +17,25 @@ const Login: React.FC = () => {
       let foundUser: any = null;
       for (const record of data) {
         try {
-          const decrypted = JSON.parse(decryptData(record.encrypted));
+          const decrypted: any = {};
+          for (const [key, value] of Object.entries(record)) {
+            if (key === "id") {
+              decrypted[key] = value;
+            } else {
+              try {
+                decrypted[key] = decryptData(String(value));
+              } catch {
+                decrypted[key] = value; 
+              }
+            }
+          }
+
           if (decrypted.email === email && decrypted.password === password) {
             foundUser = decrypted;
             break;
           }
         } catch (err) {
-          console.error("Failed to decrypt:", err);
+          console.error("Failed to decrypt record:", err);
         }
       }
 

@@ -16,17 +16,23 @@ const StudentList: React.FC = () => {
 
   const fetchStudents = async () => {
     const { data } = await axios.get("http://localhost:5000/students");
-    const decryptedStudents: StudentWithId[] = data
-      .map((record: any) => {
-        try {
-          const obj = JSON.parse(decryptData(record.encrypted));
-          return { ...obj, id: record.id };
-        } catch (err) {
-          console.error("Failed to decrypt student:", err);
-          return null;
+
+    const decryptedStudents: StudentWithId[] = data.map((record: any) => {
+      const decrypted: any = {};
+      for (const [key, value] of Object.entries(record)) {
+        if (key === "id") {
+          decrypted[key] = value;
+        } else {
+          try {
+            decrypted[key] = decryptData(String(value));
+          } catch {
+            decrypted[key] = value; 
+          }
         }
-      })
-      .filter(Boolean) as StudentWithId[];
+      }
+      return decrypted as StudentWithId;
+    });
+
     setStudents(decryptedStudents);
   };
 
@@ -40,8 +46,12 @@ const StudentList: React.FC = () => {
   };
 
   const handleCreate = async (payload: StudentShape) => {
-    const encrypted = encryptData(JSON.stringify(payload));
-    await axios.post("http://localhost:5000/students", { encrypted });
+    const encryptedData: Record<string, string> = {};
+    Object.entries(payload).forEach(([key, value]) => {
+      encryptedData[key] = encryptData(String(value));
+    });
+
+    await axios.post("http://localhost:5000/students", encryptedData);
     fetchStudents();
     setCreating(false);
   };
@@ -58,10 +68,16 @@ const StudentList: React.FC = () => {
 
   const handleSaveEdit = async (payload: StudentShape & { id?: number }) => {
     if (!payload.id) return;
-    const encrypted = encryptData(JSON.stringify(payload));
-    await axios.put(`http://localhost:5000/students/${payload.id}`, {
-      encrypted,
+
+    const encryptedData: Record<string, string> = {};
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key !== "id") encryptedData[key] = encryptData(String(value));
     });
+
+    await axios.put(
+      `http://localhost:5000/students/${payload.id}`,
+      encryptedData
+    );
     closeEdit();
     fetchStudents();
 
